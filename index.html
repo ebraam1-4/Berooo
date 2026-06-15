@@ -169,37 +169,38 @@
     </div>
 
     <script>
-      // 1. جدار الحماية الصارم: لو مش مسجل دخول خالص اطرده فوراً للوجن
-      if (sessionStorage.getItem("isLoggedIn") !== "true") {
-        window.location.href = "login.html";
-      }
+  // 1. جدار الحماية الصارم: لو مش مسجل دخول خالص اطرده فوراً للوجن
+  if (localStorage.getItem("isLoggedIn") !== "true") {
+      window.location.href = "login.html";
+  }
 
-      // 2. التحكم في الأزرار بناءً على الصلاحية بمجرد تحميل عناصر الصفحة
-      document.addEventListener("DOMContentLoaded", function () {
-        const userRole = sessionStorage.getItem("role");
+  // 2. التحكم في الأزرار بناءً على الصلاحية بمجرد تحميل عناصر الصفحة
+  document.addEventListener("DOMContentLoaded", function() {
+      const userRole = localStorage.getItem('role');
+      
+      const teacherTab = document.getElementById('teacherTab');
+      const studentTab = document.getElementById('studentTab');
 
-        const teacherTab = document.getElementById("teacherTab");
-        const studentTab = document.getElementById("studentTab");
+      // إخفاء التبويبات في البداية تماماً لمنع فلاش اللغبطة
+      if (teacherTab) teacherTab.style.display = "none";
+      if (studentTab) studentTab.style.display = "none";
 
-        // إخفاء التبويبات في البداية تماماً لمنع فلاش اللغبطة
-        if (teacherTab) teacherTab.style.display = "none";
-        if (studentTab) studentTab.style.display = "none";
-
-        // ─── [ حالة: الخادم ] ───
-        if (userRole === "teacher") {
+      // ─── [ حالة: الخادم ] ───
+      if (userRole === 'teacher') {
           if (teacherTab) teacherTab.style.display = "block"; // اظهر تسجيل التلاميذ فقط
-        }
-        // ─── [ حالة: التلميذ ] ───
-        else if (userRole === "student") {
+      } 
+      // ─── [ حالة: التلميذ ] ───
+      else if (userRole === 'student') {
           if (studentTab) studentTab.style.display = "block"; // اظهر درجاتي وغيابي فقط وبثبات تام
-        }
-        // حماية إضافية لو الـ role تالف أو ممسوح
-        else {
-          sessionStorage.clear();
+      } 
+      // حماية إضافية لو الـ role تالف أو ممسوح
+      else {
+          localStorage.clear();
           window.location.href = "login.html";
-        }
-      });
-    </script>
+      }
+  });
+</script>
+
     <script src="mine.js"></script>
   </body>
 </html>
