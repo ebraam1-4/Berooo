@@ -100,25 +100,6 @@
             margin-top: 1rem;
             display: none;
         }
-        .btn-back-cam {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 16px; /* حجم صغير وسمارت */
-    background: rgba(212, 175, 55, 0.15); /* لون ذهبي شفاف هادي */
-    border: 1px solid rgba(212, 175, 55, 0.4);
-    color: #d4af37;
-    border-radius: 6px;
-    font-weight: bold;
-    font-size: 13px; /* خط صغير مش مزعج في الشاشة */
-    cursor: pointer;
-    margin-bottom: 1.5rem;
-    transition: 0.2s;
-}
-.btn-back-cam:hover {
-    background: #d4af37;
-    color: #11172a;
-}
     </style>
 </head>
 <body>
@@ -134,9 +115,7 @@
         <div class="student-group" id="cardGroup">مجموعة تلاميذ</div>
         <div class="student-streak"><i class="ti ti-sparkles"></i> تم تسجيل الحضور بنجاح!</div>
     </div>
-<button class="btn-back-cam" onclick="forceBackCamera()">
-    <i class="ti ti-camera"></i> تشغيل الكاميرا الخلفية 
-</button>
+
     <div class="error-box" id="errorBox"></div>
 
     <a href="index.html" class="btn-back"><i class="ti ti-arrow-right"></i> العودة للرئيسية</a>
