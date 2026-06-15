@@ -128,8 +128,8 @@
 <script src="auth.js"></script>
 
 <script>
-    let html5QrcodeScanner;
-    let isProcessing = false; // لمنع تكرار التحضير المتتالي لنفس الكارنيه
+        let html5QrCode;
+    let isProcessing = false;
 
     function onScanSuccess(decodedText, decodedResult) {
         if (isProcessing) return; 
@@ -137,13 +137,11 @@
         const errorBox = document.getElementById('errorBox');
         const welcomeCard = document.getElementById('welcomeCard');
         
-        // إخفاء الصناديق السابقة مع كل قراءة جديدة
         errorBox.style.display = "none";
         welcomeCard.style.display = "none";
 
-        // تفكيك النص: اسم المجموعة|اسم التلميذ
+        // تفكيك الـ QR (مجموعة|اسم)
         const dataParts = decodedText.split('|');
-        
         if (dataParts.length < 2) {
             showError("⚠️ رمز QR غير صالح لمدرسة مارمرقس!");
             return;
@@ -153,21 +151,50 @@
         const studentGroup = dataParts[0].trim();
         const studentName = dataParts[1].trim();
 
-        // التحديث في الفايربيس بناءً على الهيكلة الجديدة
-        database.ref('groups/' + studentGroup + '/' + studentName).once('value').then((snapshot) => {
+        // الذهاب لعنوان الطالب في الفايربيس
+        const studentRef = database.ref('groups/' + studentGroup + '/' + studentName);
+
+        studentRef.once('value').then((snapshot) => {
             if (snapshot.exists()) {
-                database.ref('groups/' + studentGroup + '/' + studentName).update({
-                    status: "حاضر"
+                const userData = snapshot.val();
+                
+                // قراءة القيم الحالية أو وضع 0 لو لسه الداتا جديدة
+                let currentAttendance = userData.حضور !== undefined ? parseInt(userData.حضور) : 0;
+                let currentAbsence = userData.غياب !== undefined ? parseInt(userData.غياب) : 0;
+                
+                // 🔄 الحسبة الذكية بتاعتك:
+                let newAttendance = currentAttendance + 1; // الحضور يزيد 1
+                let newAbsence = currentAbsence - 1;       // الغياب ينقص 1 (لأنه حضر خلاص)
+                if (newAbsence < 0) newAbsence = 0;        // حماية عشان الغياب ماينزلش تحت الصفر
+
+                // تحديد حالة الطالب بناءً على العداد الجديد للغياب
+                let currentStatus = "منتظم";
+                if (newAbsence >= 6) {
+                    currentStatus = "مفصول لتجاوز حد الغياب";
+                }
+
+                // تحديث البيانات لايف في الفايربيس
+                studentRef.update({
+                    "حضور": newAttendance,
+                    "غياب": newAbsence,
+                    "الحالة": currentStatus
                 }).then(() => {
-                    // إظهار كارت الترحيب ببيانات الطفل
+                    // عرض كارت الترحيب الأخضر الفخم
                     document.getElementById('cardName').textContent = studentName;
                     document.getElementById('cardGroup').textContent = `مجموعة ${studentGroup}`;
-                    welcomeCard.style.display = "block";
                     
-                    // 🗣️ نطق اسم التلميذ
+                    const streakBox = document.querySelector('.student-streak');
+                    if (currentStatus === "منتظم") {
+                        streakBox.innerHTML = `<i class="ti ti-sparkles"></i> تم تسجيل الحضور بنجاح!`;
+                        streakBox.style.color = "#34d399";
+                    } else {
+                        streakBox.innerHTML = `<i class="ti ti-alert-triangle"></i> الطالب متجاوز للغياب ومفصول!`;
+                        streakBox.style.color = "#ef4444";
+                    }
+
+                    welcomeCard.style.display = "block";
                     speakStudentName(studentName);
 
-                    // إخفاء الكارت وتجهيز الكشاف للقراءة التالية بعد 3 ثوانٍ
                     setTimeout(() => {
                         welcomeCard.style.display = "none";
                         isProcessing = false;
@@ -190,7 +217,6 @@
         box.style.display = "block";
     }
 
-    // دالة النطق الصوتي لاسم الطالب بالعربي
     function speakStudentName(name) {
         if ('speechSynthesis' in window) {
             const utterance = new SpeechSynthesisUtterance(name);
@@ -200,17 +226,24 @@
         }
     }
 
-    // تشغيل الكاميرا تلقائياً
-    function startScanner() {
-        html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
-            fps: 10, 
-            qrbox: { width: 250, height: 250 },
-            rememberLastUsedCamera: true
-        });
-        html5QrcodeScanner.render(onScanSuccess);
+    function startCamera(facingMode) {
+        if (html5QrCode) {
+            html5QrCode.stop().then(() => { initializeScanner(facingMode); }).catch(err => { initializeScanner(facingMode); });
+        } else {
+            initializeScanner(facingMode);
+        }
     }
 
-    window.onload = startScanner;
+    function initializeScanner(facingMode) {
+        html5QrCode = new Html5QrCode("reader");
+        html5QrCode.start({ facingMode: facingMode }, { fps: 10, qrbox: { width: 250, height: 250 } }, onScanSuccess)
+        .catch(err => { showError("🚨 تعذر فتح الكاميرا، تأكد من الصلاحية!"); });
+    }
+
+    function forceBackCamera() { startCamera("environment"); }
+
+    window.onload = function() { startCamera("environment"); };
+
 </script>
 
 </body>
