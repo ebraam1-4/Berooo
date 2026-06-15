@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
     
     <script>
-        if (sessionStorage.getItem('isLoggedIn') !== 'true' || sessionStorage.getItem('role') !== 'teacher') {
+        if (localStorage.getItem('isLoggedIn') !== 'true' || localStorage.getItem('role') !== 'teacher') {
             window.location.href = "login.html";
         }
     </script>
@@ -29,32 +29,44 @@
         h1 { color: #d4af37; font-size: 24px; margin-bottom: 5px; display: flex; align-items: center; justify-content: center; gap: 10px; }
         p { font-size: 14px; color: rgba(255,255,255,0.6); margin-bottom: 1.5rem; }
         
-        /* شاشة الكاميرا النظيفة من غير زراير الفتح والقفل الزيادة */
+        /* شاشة الكاميرا */
         #reader { 
             width: 100%; 
+            min-height: 300px;
             background: #1e293b; 
             border: 2px dashed rgba(212,175,55,0.4); 
             border-radius: 16px; 
             overflow: hidden; 
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
             box-shadow: 0 8px 24px rgba(0,0,0,0.3);
         }
 
-        /* تعديلات لتجميل صندوق المكتبة الافتراضي */
-        #reader__video { border-radius: 14px; }
-        #reader img { display: none !important; } /* إخفاء أيقونة الرفع اليدوية */
-        #reader button {
-            padding: 10px 20px;
+        #reader__video { border-radius: 14px; width: 100% !important; }
+        #reader img { display: none !important; } 
+        #reader button { display: none !important; } 
+        
+        /* 📸 زرار صغير لتشغيل الكاميرا الخلفية */
+        .btn-back-cam {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: rgba(212, 175, 55, 0.15);
+            border: 1px solid rgba(212, 175, 55, 0.4);
+            color: #d4af37;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            margin-bottom: 1.5rem;
+            transition: 0.2s;
+        }
+        .btn-back-cam:hover {
             background: #d4af37;
             color: #11172a;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            margin: 10px 0;
         }
-        
-        /* كارت الترحيب المنبثق بالطفل */
+
+        /* كارت الترحيب بالطفل */
         .welcome-card { 
             background: rgba(255,255,255,0.05); 
             border: 0.5px solid rgba(255,255,255,0.15); 
@@ -62,16 +74,10 @@
             padding: 2rem; 
             display: none; 
             margin-top: 1rem; 
-            animation: popUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; 
         }
-        .student-name { font-size: 32px; color: #d4af37; font-weight: bold; margin-bottom: 8px; }
+        .student-name { font-size: 28px; color: #d4af37; font-weight: bold; margin-bottom: 8px; }
         .student-group { font-size: 16px; color: rgba(255,255,255,0.6); margin-bottom: 12px; }
-        .student-streak { font-size: 15px; color: #34d399; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 5px; }
-
-        @keyframes popUp {
-            0% { transform: scale(0.8); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
+        .student-streak { font-size: 15px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 5px; }
 
         .btn-back {
             display: inline-flex;
@@ -87,33 +93,31 @@
             font-size: 14px;
             transition: 0.2s;
         }
-        .btn-back:hover {
-            background: rgba(255,255,255,0.1);
-            border-color: #d4af37;
-        }
-        .error-box {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px dashed #ef4444;
-            border-radius: 12px;
-            padding: 15px;
-            color: #f87171;
-            margin-top: 1rem;
-            display: none;
-        }
+        .btn-back:hover { border-color: #d4af37; }
+        .error-box { background: rgba(239, 68, 68, 0.1); border: 1px dashed #ef4444; border-radius: 12px; padding: 15px; color: #f87171; margin-top: 1rem; display: none; }
     </style>
+
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="auth.js"></script>
 </head>
 <body>
 
 <div class="scanner-container">
     <h1><i class="ti ti-qrcode"></i> الكشاف السحري للتحضير</h1>
-    <p>وجه كاميرا الموبايل نحو رمز الـ QR الموجود على كارنيه التلميذ</p>
+    <p>وجه الكاميرا نحو رمز الـ QR الموجود على كارنيه التلميذ</p>
 
     <div id="reader"></div>
+
+    <button class="btn-back-cam" onclick="forceBackCamera()">
+        <i class="ti ti-camera"></i> تشغيل الكاميرا الخلفية فقط
+    </button>
 
     <div class="welcome-card" id="welcomeCard">
         <div class="student-name" id="cardName">أبونا فلان</div>
         <div class="student-group" id="cardGroup">مجموعة تلاميذ</div>
-        <div class="student-streak"><i class="ti ti-sparkles"></i> تم تسجيل الحضور بنجاح!</div>
+        <div class="student-streak"></div>
     </div>
 
     <div class="error-box" id="errorBox"></div>
@@ -121,14 +125,8 @@
     <a href="index.html" class="btn-back"><i class="ti ti-arrow-right"></i> العودة للرئيسية</a>
 </div>
 
-<script src="https://unpkg.com/html5-qrcode"></script>
-
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-<script src="auth.js"></script>
-
 <script>
-        let html5QrCode;
+    let html5QrCode;
     let isProcessing = false;
 
     function onScanSuccess(decodedText, decodedResult) {
@@ -140,7 +138,6 @@
         errorBox.style.display = "none";
         welcomeCard.style.display = "none";
 
-        // تفكيك الـ QR (مجموعة|اسم)
         const dataParts = decodedText.split('|');
         if (dataParts.length < 2) {
             showError("⚠️ رمز QR غير صالح لمدرسة مارمرقس!");
@@ -151,55 +148,63 @@
         const studentGroup = dataParts[0].trim();
         const studentName = dataParts[1].trim();
 
-        // الذهاب لعنوان الطالب في الفايربيس
         const studentRef = database.ref('groups/' + studentGroup + '/' + studentName);
 
         studentRef.once('value').then((snapshot) => {
             if (snapshot.exists()) {
                 const userData = snapshot.val();
                 
-                // قراءة القيم الحالية أو وضع 0 لو لسه الداتا جديدة
                 let currentAttendance = userData.حضور !== undefined ? parseInt(userData.حضور) : 0;
                 let currentAbsence = userData.غياب !== undefined ? parseInt(userData.غياب) : 0;
                 
-                // 🔄 الحسبة الذكية بتاعتك:
-                let newAttendance = currentAttendance + 1; // الحضور يزيد 1
-                let newAbsence = currentAbsence - 1;       // الغياب ينقص 1 (لأنه حضر خلاص)
-                if (newAbsence < 0) newAbsence = 0;        // حماية عشان الغياب ماينزلش تحت الصفر
+                if (currentAbsence >= 6) {
+                    // 🚨 ترحيل أوتوماتيك لشجرة المفصولين
+                    const firedRef = database.ref('fired_students/' + studentGroup + '/' + studentName);
+                    firedRef.set({
+                        "حضور": currentAttendance,
+                        "غياب": currentAbsence,
+                        "درجات": userData.درجات !== undefined ? userData.درجات : 0,
+                        "الحالة": "مفصول لتجاوز حد الغياب",
+                        "تاريخ_الفصل": new Date().toISOString().split('T')[0]
+                    }).then(() => {
+                        studentRef.remove().then(() => {
+                            document.getElementById('cardName').textContent = studentName;
+                            document.getElementById('cardGroup').textContent = `مجموعة ${studentGroup}`;
+                            
+                            const streakBox = document.querySelector('.student-streak');
+                            streakBox.innerHTML = `<i class="ti ti-alert-triangle"></i> تم نقل الطالب لشجرة المفصولين تلقائياً!`;
+                            streakBox.style.color = "#ef4444";
+                            
+                            welcomeCard.style.display = "block";
+                            speakStudentName(studentName + " مفصول");
+                            
+                            setTimeout(() => { welcomeCard.style.display = "none"; isProcessing = false; }, 3000);
+                        });
+                    });
+                } else {
+                    // 🟢 الوضع الطبيعي: حضور +1 وغياب -1
+                    let newAttendance = currentAttendance + 1;
+                    let newAbsence = currentAbsence - 1;
+                    if (newAbsence < 0) newAbsence = 0;
 
-                // تحديد حالة الطالب بناءً على العداد الجديد للغياب
-                let currentStatus = "منتظم";
-                if (newAbsence >= 6) {
-                    currentStatus = "مفصول لتجاوز حد الغياب";
-                }
-
-                // تحديث البيانات لايف في الفايربيس
-                studentRef.update({
-                    "حضور": newAttendance,
-                    "غياب": newAbsence,
-                    "الحالة": currentStatus
-                }).then(() => {
-                    // عرض كارت الترحيب الأخضر الفخم
-                    document.getElementById('cardName').textContent = studentName;
-                    document.getElementById('cardGroup').textContent = `مجموعة ${studentGroup}`;
-                    
-                    const streakBox = document.querySelector('.student-streak');
-                    if (currentStatus === "منتظم") {
+                    studentRef.update({
+                        "حضور": newAttendance,
+                        "غياب": newAbsence,
+                        "الحالة": "منتظم"
+                    }).then(() => {
+                        document.getElementById('cardName').textContent = studentName;
+                        document.getElementById('cardGroup').textContent = `مجموعة ${studentGroup}`;
+                        
+                        const streakBox = document.querySelector('.student-streak');
                         streakBox.innerHTML = `<i class="ti ti-sparkles"></i> تم تسجيل الحضور بنجاح!`;
                         streakBox.style.color = "#34d399";
-                    } else {
-                        streakBox.innerHTML = `<i class="ti ti-alert-triangle"></i> الطالب متجاوز للغياب ومفصول!`;
-                        streakBox.style.color = "#ef4444";
-                    }
 
-                    welcomeCard.style.display = "block";
-                    speakStudentName(studentName);
+                        welcomeCard.style.display = "block";
+                        speakStudentName(studentName);
 
-                    setTimeout(() => {
-                        welcomeCard.style.display = "none";
-                        isProcessing = false;
-                    }, 3000);
-                });
+                        setTimeout(() => { welcomeCard.style.display = "none"; isProcessing = false; }, 3000);
+                    });
+                }
             } else {
                 showError(`❌ الاسم "${studentName}" غير موجود في مجموعة "${studentGroup}"!`);
                 setTimeout(() => { isProcessing = false; }, 3000);
@@ -237,13 +242,18 @@
     function initializeScanner(facingMode) {
         html5QrCode = new Html5QrCode("reader");
         html5QrCode.start({ facingMode: facingMode }, { fps: 10, qrbox: { width: 250, height: 250 } }, onScanSuccess)
-        .catch(err => { showError("🚨 تعذر فتح الكاميرا، تأكد من الصلاحية!"); });
+        .catch(err => { 
+            console.error(err);
+            showError("🚨 تعذر فتح الكاميرا، تأكد من إعطاء الصلاحية للموقع وضغط زرار الكاميرا الخلفية!"); 
+        });
     }
 
     function forceBackCamera() { startCamera("environment"); }
 
-    window.onload = function() { startCamera("environment"); };
-
+    // 🔥 الطريقة الآمنة لفتح الكاميرا بعد تحميل الصفحة بالكامل لمنع الشاشة السودا
+    document.addEventListener("DOMContentLoaded", function() {
+        setTimeout(() => { startCamera("environment"); }, 500);
+    });
 </script>
 
 </body>
