@@ -8,10 +8,18 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
     
     <script>
-        if (localStorage.getItem('isLoggedIn') !== 'true' || localStorage.getItem('role') !== 'student') {
-            window.location.href = "login.html";
-        }
-    </script>
+    // لو مش مسجل دخول خالص، اطرده لصفحة اللوجن
+    if (localStorage.getItem('isLoggedIn') !== 'true') {
+        window.location.href = "login.html";
+    }
+    
+    // لو اللي داخل تلميذ، سيبه يكمل عادي جداً بدون طرد
+    // لو خادم، اطرده للرئيسية لأن الصفحة دي للتلاميذ بس
+    if (localStorage.getItem('role') === 'teacher') {
+        window.location.href = "index.html";
+    }
+</script>
+
 
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
