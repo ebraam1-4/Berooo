@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم والكنترول - مدرسة مار مرقس</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: sans-serif; min-height: 100vh; background: #11172a; color: #fff; padding: 2rem; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .header-box { background: rgba(255,255,255,0.05); border: 0.5px solid rgba(255,255,255,0.12); border-radius: 12px; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .welcome-txt { font-size: 18px; font-weight: bold; }
+        .welcome-txt span { color: #d4af37; }
+        .btn-logout { padding: 8px 16px; background: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .control-panel { background: rgba(255,255,255,0.05); border: 0.5px solid rgba(255,255,255,0.12); border-radius: 12px; padding: 2rem; text-align: center; }
+        .control-panel h2 { color: #d4af37; font-size: 20px; margin-bottom: 1rem; }
+        .control-panel p { font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 2rem; line-height: 1.6; }
+        .btn-action { width: 100%; padding: 14px; background: #dc3545; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3); transition: 0.2s; }
+        .btn-action:hover { background: #bd2130; }
+        .alert-msg { padding: 12px; border-radius: 6px; font-size: 14px; margin-top: 1.5rem; display: none; }
+        .alert-msg.success { background: rgba(40, 167, 69, 0.2); color: #28a745; border: 0.5px solid #28a745; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header-box">
+            <div class="welcome-txt">غرفة الكنترول: أ/ <span id="teacherName">..</span></div>
+            <button class="btn-logout" onclick="logout()">خروج</button>
+        </div>
+
+        <div class="control-panel">
+            <h2><i class="ti ti-alarm"></i> كبسولة الساعة 12:00 ظهراً</h2>
+            <p>
+                عند حلول الساعة 12:00 ظهراً، اضغط على الزرار بالأسفل لإغلاق الـ QR Code الخاص بالباب وتثبيت غياب المخدومين الذين تخلفوا عن الحضور اليوم بشكل تلقائي مع تطبيق عقوبة الفصل التلقائي لمن تجاوز 5 أيام.
+            </p>
+
+            <button class="btn-action" onclick="closeAttendanceAndProcess()">
+                <i class="ti ti-lock-square"></i> قفل باب الحضور وتثبيت الغياب اليومي
+            </button>
+
+            <div id="alertBox" class="alert-msg"></div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="auth.js"></script>
+
+    <script>
+        if (sessionStorage.getItem('isLoggedIn') !== 'true' || sessionStorage.getItem('role') !== 'teacher') {
+            window.location.href = "login.html";
+        } else {
+            document.getElementById('teacherName').textContent = sessionStorage.getItem('teacherName');
+        }
+
+        function closeAttendanceAndProcess() {
+            const alertBox = document.getElementById('alertBox');
+            
+            // 1. نقفل السيستم في الفايربيس عشان مفيش طالب يعرف يحضر نفسه تاني
+            database.ref('system_status').set({
+                attendance_open: false
+            }).then(() => {
+                
+                // 2. نلف على كل المجموعات والطلاب نشوف مين اللي لسه "غائب"
+                database.ref('groups').once('value').then((snapshot) => {
+                    if (snapshot.exists()) {
+                        snapshot.forEach((groupSnapshot) => {
+                            const groupName = groupSnapshot.key;
+                            
+                            // نتخطى فولدر هيئة التدريس مش عايزين نغيب المدرسين!
+                            if (groupName !== "هيئة التدريس") {
+                                
+                                groupSnapshot.forEach((studentSnapshot) => {
+                                    const studentName = studentSnapshot.key;
+                                    const studentData = studentSnapshot.val();
+                                    
+                                    // لو الواد لسه حالته "غائب" ومفيش قدامه "حاضر"
+                                    if (studentData.status === "غائب" && studentData.grades !== "❌ الحساب معطل (مفصول)") {
+                                        let currentAbsences = parseInt(studentData.attendance) || 0;
+                                        let newAbsences = currentAbsences + 1;
+                                        
+                                        let finalAttendanceString = newAbsences; 
+                                        let finalGrades = studentData.grades;
+
+                                        // قاعدة الفصل الذكي (5 أيام)
+                                        if (newAbsences >= 5) {
+                                            finalAttendanceString = "مفصول لتجاوز الغياب (5 أيام)";
+                                            finalGrades = "❌ الحساب معطل (مفصول)";
+                                        }
+
+                                        // تحديث بيانات الطالب الغايب فوراً
+                                        database.ref('groups/' + groupName + '/' + studentName).update({
+                                            attendance: finalAttendanceString,
+                                            grades: finalGrades
+                                        });
+                                    } 
+                                    // لو الطالب كان حاضر، بنرجع حالته لـ "غائب" عشان بكرة يبدأ على نضافه
+                                    else if (studentData.status === "حاضر") {
+                                        database.ref('groups/' + groupName + '/' + studentName).update({
+                                            status: "غائب"
+                                        });
+                                    }
+                                });
+                            }
+                        });
+
+                        alertBox.className = "alert-msg success";
+                        alertBox.textContent = "🔒 تم قفل الحضور بنجاح، وتحديث غيابات التلاميذ المتأخرين وفصل من تجاوز 5 أيام تلقائياً!";
+                        alertBox.style.display = "block";
+                    }
+                });
+            });
+        }
+
+        function logout() { sessionStorage.clear(); window.location.href = "login.html"; }
+    </script>
+</body>
+</html>
