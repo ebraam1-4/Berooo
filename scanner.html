@@ -14,86 +14,17 @@
 
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { 
-            font-family: sans-serif; 
-            min-height: 100vh; 
-            background: #11172a; 
-            color: #fff; 
-            padding: 2rem; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-        }
-        
+        body { font-family: sans-serif; min-height: 100vh; background: #11172a; color: #fff; padding: 2rem; display: flex; flex-direction: column; align-items: center; }
         .scanner-container { max-width: 500px; width: 100%; text-align: center; }
         h1 { color: #d4af37; font-size: 24px; margin-bottom: 5px; display: flex; align-items: center; justify-content: center; gap: 10px; }
         p { font-size: 14px; color: rgba(255,255,255,0.6); margin-bottom: 1.5rem; }
-        
-        /* شاشة الكاميرا */
-        #reader { 
-            width: 100%; 
-            min-height: 300px;
-            background: #1e293b; 
-            border: 2px dashed rgba(212,175,55,0.4); 
-            border-radius: 16px; 
-            overflow: hidden; 
-            margin-bottom: 1rem;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-        }
-
-        #reader__video { border-radius: 14px; width: 100% !important; }
-        #reader img { display: none !important; } 
-        #reader button { display: none !important; } 
-        
-        /* 📸 زرار صغير لتشغيل الكاميرا الخلفية */
-        .btn-back-cam {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 16px;
-            background: rgba(212, 175, 55, 0.15);
-            border: 1px solid rgba(212, 175, 55, 0.4);
-            color: #d4af37;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 13px;
-            cursor: pointer;
-            margin-bottom: 1.5rem;
-            transition: 0.2s;
-        }
-        .btn-back-cam:hover {
-            background: #d4af37;
-            color: #11172a;
-        }
-
-        /* كارت الترحيب بالطفل */
-        .welcome-card { 
-            background: rgba(255,255,255,0.05); 
-            border: 0.5px solid rgba(255,255,255,0.15); 
-            border-radius: 16px; 
-            padding: 2rem; 
-            display: none; 
-            margin-top: 1rem; 
-        }
-        .student-name { font-size: 28px; color: #d4af37; font-weight: bold; margin-bottom: 8px; }
-        .student-group { font-size: 16px; color: rgba(255,255,255,0.6); margin-bottom: 12px; }
-        .student-streak { font-size: 15px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 5px; }
-
-        .btn-back {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 1.5rem;
-            padding: 10px 20px;
-            background: rgba(255,255,255,0.06);
-            border: 0.5px solid rgba(255,255,255,0.15);
-            color: #fff;
-            border-radius: 8px;
-            text-decoration: none;
-            font-size: 14px;
-            transition: 0.2s;
-        }
-        .btn-back:hover { border-color: #d4af37; }
+        #reader { width: 100%; min-height: 300px; background: #1e293b; border: 2px dashed rgba(212,175,55,0.4); border-radius: 16px; overflow: hidden; margin-bottom: 1rem; }
+        #reader__video { width: 100% !important; border-radius: 14px; }
+        .btn-back-cam { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: rgba(212, 175, 55, 0.15); border: 1px solid rgba(212, 175, 55, 0.4); color: #d4af37; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; margin-bottom: 1.5rem; }
+        .welcome-card { background: rgba(255,255,255,0.05); border: 0.5px solid rgba(255,255,255,0.15); border-radius: 16px; padding: 2rem; display: none; margin-top: 1rem; }
+        .student-name { font-size: 28px; color: #d4af37; font-weight: bold; }
+        .student-streak { font-size: 15px; font-weight: bold; margin-top: 10px; }
+        .btn-back { display: inline-flex; align-items: center; gap: 8px; margin-top: 1.5rem; padding: 10px 20px; background: rgba(255,255,255,0.06); border: 0.5px solid rgba(255,255,255,0.15); color: #fff; border-radius: 8px; text-decoration: none; }
         .error-box { background: rgba(239, 68, 68, 0.1); border: 1px dashed #ef4444; border-radius: 12px; padding: 15px; color: #f87171; margin-top: 1rem; display: none; }
     </style>
 
@@ -117,7 +48,7 @@
     <div class="welcome-card" id="welcomeCard">
         <div class="student-name" id="cardName">أبونا فلان</div>
         <div class="student-group" id="cardGroup">مجموعة تلاميذ</div>
-        <div class="student-streak"></div>
+        <div class="student-streak" id="cardStreak"></div>
     </div>
 
     <div class="error-box" id="errorBox"></div>
@@ -132,15 +63,12 @@
     function onScanSuccess(decodedText, decodedResult) {
         if (isProcessing) return; 
 
-        const errorBox = document.getElementById('errorBox');
-        const welcomeCard = document.getElementById('welcomeCard');
-        
-        errorBox.style.display = "none";
-        welcomeCard.style.display = "none";
+        document.getElementById('errorBox').style.display = "none";
+        document.getElementById('welcomeCard').style.display = "none";
 
         const dataParts = decodedText.split('|');
         if (dataParts.length < 2) {
-            showError("⚠️ رمز QR غير صالح لمدرسة مارمرقس!");
+            showError("⚠️ رمز QR غير صالح!");
             return;
         }
 
@@ -154,66 +82,59 @@
             if (snapshot.exists()) {
                 const userData = snapshot.val();
                 
+                // القراءة بالأسماء العربي من الفايربيس
                 let currentAttendance = userData.حضور !== undefined ? parseInt(userData.حضور) : 0;
                 let currentAbsence = userData.غياب !== undefined ? parseInt(userData.غياب) : 0;
                 
+                let newAttendance = currentAttendance + 1;
+                let newAbsence = currentAbsence - 1;
+                if (newAbsence < 0) newAbsence = 0;
+
+                // لو الغياب وصل 6، انقل لشجرة المفصولين
                 if (currentAbsence >= 6) {
-                    // 🚨 ترحيل أوتوماتيك لشجرة المفصولين
                     const firedRef = database.ref('fired_students/' + studentGroup + '/' + studentName);
                     firedRef.set({
                         "حضور": currentAttendance,
                         "غياب": currentAbsence,
                         "درجات": userData.درجات !== undefined ? userData.درجات : 0,
-                        "الحالة": "مفصول لتجاوز حد الغياب",
-                        "تاريخ_الفصل": new Date().toISOString().split('T')[0]
+                        "الحالة": "مفصول لتجاوز حد الغياب"
                     }).then(() => {
                         studentRef.remove().then(() => {
-                            document.getElementById('cardName').textContent = studentName;
-                            document.getElementById('cardGroup').textContent = `مجموعة ${studentGroup}`;
-                            
-                            const streakBox = document.querySelector('.student-streak');
-                            streakBox.innerHTML = `<i class="ti ti-alert-triangle"></i> تم نقل الطالب لشجرة المفصولين تلقائياً!`;
-                            streakBox.style.color = "#ef4444";
-                            
-                            welcomeCard.style.display = "block";
-                            speakStudentName(studentName + " مفصول");
-                            
-                            setTimeout(() => { welcomeCard.style.display = "none"; isProcessing = false; }, 3000);
+                            showWelcome(studentName, studentGroup, "⚠️ تم نقل الطالب للمفصولين لتجاوز الغياب!", "#ef4444");
                         });
                     });
                 } else {
-                    // 🟢 الوضع الطبيعي: حضور +1 وغياب -1
-                    let newAttendance = currentAttendance + 1;
-                    let newAbsence = currentAbsence - 1;
-                    if (newAbsence < 0) newAbsence = 0;
-
+                    // تحديث عادي بالعربي
                     studentRef.update({
                         "حضور": newAttendance,
                         "غياب": newAbsence,
                         "الحالة": "منتظم"
                     }).then(() => {
-                        document.getElementById('cardName').textContent = studentName;
-                        document.getElementById('cardGroup').textContent = `مجموعة ${studentGroup}`;
-                        
-                        const streakBox = document.querySelector('.student-streak');
-                        streakBox.innerHTML = `<i class="ti ti-sparkles"></i> تم تسجيل الحضور بنجاح!`;
-                        streakBox.style.color = "#34d399";
-
-                        welcomeCard.style.display = "block";
-                        speakStudentName(studentName);
-
-                        setTimeout(() => { welcomeCard.style.display = "none"; isProcessing = false; }, 3000);
+                        showWelcome(studentName, studentGroup, "✅ تم تسجيل الحضور بنجاح!", "#34d399");
                     });
                 }
             } else {
                 showError(`❌ الاسم "${studentName}" غير موجود في مجموعة "${studentGroup}"!`);
-                setTimeout(() => { isProcessing = false; }, 3000);
+                isProcessing = false;
             }
         }).catch((err) => {
-            console.error(err);
-            showError("🚨 خطأ أثناء الاتصال بقاعدة البيانات!");
-            setTimeout(() => { isProcessing = false; }, 3000);
+            showError("🚨 خطأ في الاتصال بالفايربيس!");
+            isProcessing = false;
         });
+    }
+
+    function showWelcome(name, group, msg, color) {
+        document.getElementById('cardName').textContent = name;
+        document.getElementById('cardGroup').textContent = `مجموعة ${group}`;
+        const streak = document.getElementById('cardStreak');
+        streak.textContent = msg;
+        streak.style.color = color;
+        document.getElementById('welcomeCard').style.display = "block";
+        
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.speak(new SpeechSynthesisUtterance(name));
+        }
+        setTimeout(() => { document.getElementById('welcomeCard').style.display = "none"; isProcessing = false; }, 3000);
     }
 
     function showError(text) {
@@ -222,18 +143,9 @@
         box.style.display = "block";
     }
 
-    function speakStudentName(name) {
-        if ('speechSynthesis' in window) {
-            const utterance = new SpeechSynthesisUtterance(name);
-            utterance.lang = 'ar-EG'; 
-            utterance.rate = 0.9;     
-            window.speechSynthesis.speak(utterance);
-        }
-    }
-
     function startCamera(facingMode) {
         if (html5QrCode) {
-            html5QrCode.stop().then(() => { initializeScanner(facingMode); }).catch(err => { initializeScanner(facingMode); });
+            html5QrCode.stop().then(() => { initializeScanner(facingMode); }).catch(() => { initializeScanner(facingMode); });
         } else {
             initializeScanner(facingMode);
         }
@@ -242,19 +154,14 @@
     function initializeScanner(facingMode) {
         html5QrCode = new Html5QrCode("reader");
         html5QrCode.start({ facingMode: facingMode }, { fps: 10, qrbox: { width: 250, height: 250 } }, onScanSuccess)
-        .catch(err => { 
-            console.error(err);
-            showError("🚨 تعذر فتح الكاميرا، تأكد من إعطاء الصلاحية للموقع وضغط زرار الكاميرا الخلفية!"); 
-        });
+        .catch(() => { showError("🚨 اضغط على زرار تشغيل الكاميرا الخلفية لتفعيل الكشاف."); });
     }
 
     function forceBackCamera() { startCamera("environment"); }
 
-    // 🔥 الطريقة الآمنة لفتح الكاميرا بعد تحميل الصفحة بالكامل لمنع الشاشة السودا
     document.addEventListener("DOMContentLoaded", function() {
         setTimeout(() => { startCamera("environment"); }, 500);
     });
 </script>
-
 </body>
 </html>
