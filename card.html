@@ -8,50 +8,27 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
     
     <script>
-    // لو مش مسجل دخول خالص، اطرده لصفحة اللوجن
-    if (localStorage.getItem('isLoggedIn') !== 'true') {
-        window.location.href = "login.html";
-    }
-    
-    // لو اللي داخل تلميذ، سيبه يكمل عادي جداً بدون طرد
-    // لو خادم، اطرده للرئيسية لأن الصفحة دي للتلاميذ بس
-    if (localStorage.getItem('role') === 'teacher') {
-        window.location.href = "index.html";
-    }
-</script>
-
-
+        if (localStorage.getItem('isLoggedIn') !== 'true') {
+            window.location.href = "login.html";
+        }
+    </script>
 
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: sans-serif; background: #11172a; color: #fff; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
         #container { width: 100%; max-width: 1200px; padding: 2rem; }
         .card-wrapper { display: flex; justify-content: center; align-items: center; margin-top: 3rem; }
-        
-        .student-digital-card {
-            background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
-            border: 1px solid rgba(212, 175, 55, 0.3);
-            border-radius: 20px; width: 100%; max-width: 450px; padding: 2.5rem 2rem;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.5); text-align: center; position: relative;
-        }
-
-        .status-badge {
-            margin-top: 10px; padding: 6px 16px; border-radius: 50px; font-weight: bold; font-size: 14px; display: inline-block;
-        }
+        .student-digital-card { background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 20px; width: 100%; max-width: 450px; padding: 2.5rem 2rem; box-shadow: 0 15px 35px rgba(0,0,0,0.5); text-align: center; }
+        .status-badge { margin-top: 10px; padding: 6px 16px; border-radius: 50px; font-weight: bold; font-size: 14px; display: inline-block; }
         .status-active { background: rgba(52, 211, 153, 0.15); border: 1px solid #34d399; color: #34d399; }
-        .status-fired { background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #f87171; animation: blink 1s infinite; }
-
-        @keyframes blink { 50% { opacity: 0.6; } }
-
+        .status-fired { background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #f87171; }
         .display-name { font-size: 26px; font-weight: bold; color: #fff; margin-top: 1rem; }
         .display-group { font-size: 14px; color: #d4af37; margin-bottom: 1.5rem; }
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
         .stat-box { background: rgba(255,255,255,0.03); border: 0.5px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 1rem; }
         .stat-label { font-size: 11px; color: rgba(255,255,255,0.4); margin-bottom: 6px; }
         .stat-value { font-size: 24px; font-weight: bold; }
-        
-        .btn-back-home { display: inline-flex; align-items: center; gap: 8px; margin-top: 2rem; padding: 10px 24px; background: rgba(255,255,255,0.05); border: 0.5px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.7); border-radius: 8px; text-decoration: none; font-size: 14px; }
-        .btn-back-home:hover { border-color: #d4af37; color: #fff; }
+        .btn-back-home { display: inline-flex; align-items: center; gap: 8px; margin-top: 2rem; padding: 10px 24px; background: rgba(255,255,255,0.05); border: 0.5px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.7); border-radius: 8px; text-decoration: none; }
     </style>
 </head>
 <body>
@@ -79,9 +56,8 @@
         </nav>
 
         <div class="card-wrapper">
-            <div class="student-digital-card" id="studentCard">
+            <div class="student-digital-card">
                 <div id="statusBadge" class="status-badge status-active">منتظم</div>
-                
                 <div class="display-name" id="studentNameDisplay">جاري التحميل...</div>
                 <div class="display-group" id="studentGroupDisplay">مجموعة التلميذ</div>
 
@@ -99,7 +75,6 @@
                         <div class="stat-value" style="color: #e8c84a;" id="studentGradesDisplay">0</div>
                     </div>
                 </div>
-
                 <a href="index.html" class="btn-back-home"><i class="ti ti-arrow-right"></i> العودة للرئيسية</a>
             </div>
         </div>
@@ -118,31 +93,20 @@
                 document.getElementById('studentNameDisplay').textContent = name;
                 document.getElementById('studentGroupDisplay').textContent = `مجموعة ${group}`;
 
-                // جلب البيانات لايف من الفايربيس لضمان دقة العدادات
                 database.ref('groups/' + group + '/' + name).on('value', (snapshot) => {
                     if (snapshot.exists()) {
                         const data = snapshot.val();
+                        document.getElementById('studentAttendanceDisplay').textContent = data.حضور || 0;
+                        document.getElementById('studentAbsenceDisplay').textContent = data.غياب || 0;
+                        document.getElementById('studentGradesDisplay').textContent = data.درجات || 0;
                         
-                        const attendance = data.حضور !== undefined ? data.حضور : 0;
-                        const absence = data.غياب !== undefined ? data.غياب : 0;
-                        const grades = data.درجات !== undefined ? data.درجات : 0;
-                        const status = data.الحالة !== undefined ? data.الحالة : "منتظم";
-
-                        document.getElementById('studentAttendanceDisplay').textContent = attendance;
-                        document.getElementById('studentAbsenceDisplay').textContent = absence;
-                        document.getElementById('studentGradesDisplay').textContent = grades;
-
                         const badge = document.getElementById('statusBadge');
-                        const card = document.getElementById('studentCard');
-                        
-                        if (status === "منتظم") {
+                        if (data.الحالة === "منتظم") {
                             badge.textContent = "✅ منتظم";
                             badge.className = "status-badge status-active";
-                            card.style.borderColor = "rgba(212, 175, 55, 0.3)";
                         } else {
                             badge.textContent = "⚠️ مفصول لتجاوز الغياب";
                             badge.className = "status-badge status-fired";
-                            card.style.borderColor = "#ef4444"; // قلب الكارت باللون الأحمر التحذيري
                         }
                     }
                 });
