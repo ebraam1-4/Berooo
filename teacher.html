@@ -9,17 +9,28 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: sans-serif; min-height: 100vh; background: #11172a; color: #fff; padding: 2rem; }
         .container { max-width: 600px; margin: 0 auto; }
-        .header-box { background: rgba(255,255,255,0.05); border: 0.5px solid rgba(255,255,255,0.12); border-radius: 12px; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .header-box { background: rgba(255,255,255,0.05); border: 0.5px solid rgba(255,255,255,0.12); border-radius: 12px; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; gap: 10px; }
         .welcome-txt { font-size: 18px; font-weight: bold; }
         .welcome-txt span { color: #d4af37; }
-        .btn-logout , .btn-logout a { text-decoration: none;padding: 8px 16px; background: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .control-panel { background: rgba(255,255,255,0.05); border: 0.5px solid rgba(255,255,255,0.12); border-radius: 12px; padding: 2rem; text-align: center; }
+        .header-buttons { display: flex; gap: 8px; }
+        .btn-logout, .btn-logout a { text-decoration: none; padding: 8px 16px; background: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; display: inline-flex; align-items: center; }
+        .btn-home { background: rgba(255,255,255,0.1); border: 0.5px solid rgba(255,255,255,0.2); }
+        .btn-home a { color: #fff; }
+        
+        .control-panel { background: rgba(255,255,255,0.05); border: 0.5px solid rgba(255,255,255,0.12); border-radius: 12px; padding: 2rem; text-align: center; margin-bottom: 1.5rem; }
         .control-panel h2 { color: #d4af37; font-size: 20px; margin-bottom: 1rem; }
         .control-panel p { font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 2rem; line-height: 1.6; }
-        .btn-action { width: 100%; padding: 14px; background: #dc3545; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3); transition: 0.2s; }
+        
+        .btn-action { width: 100%; padding: 14px; background: #dc3545; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3); transition: 0.2s; margin-bottom: 1rem; }
         .btn-action:hover { background: #bd2130; }
-        .alert-msg { padding: 12px; border-radius: 6px; font-size: 14px; margin-top: 1.5rem; display: none; }
+        
+        /* 🔓 تصميم زرار إعادة فتح الحضور السحري */
+        .btn-reopen { background: #28a745; box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3); }
+        .btn-reopen:hover { background: #218838; }
+
+        .alert-msg { padding: 12px; border-radius: 6px; font-size: 14px; margin-top: 1.5rem; display: none; text-align: center; }
         .alert-msg.success { background: rgba(40, 167, 69, 0.2); color: #28a745; border: 0.5px solid #28a745; }
+        .alert-msg.info { background: rgba(23, 162, 184, 0.2); color: #17a2b8; border: 0.5px solid #17a2b8; }
     </style>
 </head>
 <body>
@@ -27,19 +38,22 @@
     <div class="container">
         <div class="header-box">
             <div class="welcome-txt">غرفة الكنترول: أ/ <span id="teacherName">..</span></div>
-            <button class="btn-logout" onclick="logout()">خروج</button>
-            <button class="btn-logout" ><a href="index.html">الرئيسية</a></button>
+            <div class="header-buttons">
+                <button class="btn-logout btn-home"><a href="index.html">الرئيسية</a></button>
+                <button class="btn-logout" onclick="logout()">خروج</button>
+            </div>
         </div>
 
         <div class="control-panel">
-            <h2><i class="ti ti-alarm"></i> غلق الحضور</h2>
-            <p>
-                
-            غلق الحضور الساعه 8
-            </p>
+            <h2><i class="ti ti-settings"></i> إدارة نظام الحضور والغياب</h2>
+            <p>يمكنك قفل باب الحضور وتثبيت غياب التلاميذ اليومي، أو إعادة فتح الباب لإتاحة التسجيل مجدداً وإلغاء غياب اليوم تلقائياً.</p>
 
             <button class="btn-action" onclick="closeAttendanceAndProcess()">
                 <i class="ti ti-lock-square"></i> قفل باب الحضور وتثبيت الغياب اليومي
+            </button>
+
+            <button class="btn-action btn-reopen" onclick="openAttendanceAndReset()">
+                <i class="ti ti-lock-open"></i> إعادة فتح باب الحضور (إلغاء غياب اليوم)
             </button>
 
             <div id="alertBox" class="alert-msg"></div>
@@ -57,62 +71,112 @@
             document.getElementById('teacherName').textContent = sessionStorage.getItem('teacherName');
         }
 
+        // 🔒 الدالة الأصلية لقفل الحضور وتنزيل الغياب
         function closeAttendanceAndProcess() {
+            if (!confirm("هل أنت متأكد من قفل الحضور؟ سيتم احتساب غياب إضافي لكل من لم يسجل حضوراً اليوم.")) return;
+            
             const alertBox = document.getElementById('alertBox');
             
-            // 1. نقفل السيستم في الفايربيس عشان مفيش طالب يعرف يحضر نفسه تاني
             database.ref('system_status').set({
                 attendance_open: false
             }).then(() => {
                 
-                // 2. نلف على كل المجموعات والطلاب نشوف مين اللي لسه "غائب"
                 database.ref('groups').once('value').then((snapshot) => {
                     if (snapshot.exists()) {
+                        let updates = {};
+                        
                         snapshot.forEach((groupSnapshot) => {
                             const groupName = groupSnapshot.key;
                             
-                            // نتخطى فولدر هيئة التدريس مش عايزين نغيب المدرسين!
                             if (groupName !== "هيئة التدريس") {
-                                
                                 groupSnapshot.forEach((studentSnapshot) => {
                                     const studentName = studentSnapshot.key;
                                     const studentData = studentSnapshot.val();
                                     
-                                    // لو الواد ده مفصول فعلاً، مفيش داعي نلمس بياناته تاني
-                                    if (studentData.grades === "❌ الحساب معطل (مفصول)") {
+                                    if (studentData.grades === "❌ الحساب معطل (مفصول)" || studentData.status === "مفصول") {
                                         return;
                                     }
 
-                                    // لو الواد لسه حالته "غائب" ومفيش قدامه "حاضر"
-                                    if (studentData.status === "غائب") {
+                                    // لو الطالب حالته لسه "غائب" أو فاضية (يعني محضيرش) بنزود غيابه 1
+                                    if (studentData.status === "غائب" || !studentData.status) {
                                         let currentAbsences = parseInt(studentData.absence) || 0;
                                         let newAbsences = currentAbsences + 1;
 
-                                        let updateData = { absence: newAbsences };
+                                        updates[`/groups/${groupName}/${studentName}/absence`] = newAbsences;
+                                        updates[`/groups/${groupName}/${studentName}/status`] = "غائب";
 
-                                        // قاعدة الفصل الذكي (6 أيام غياب)
                                         if (newAbsences >= 6) {
-                                            updateData.status = "مفصول";
-                                            updateData.grades = "❌ الحساب معطل (مفصول)";
+                                            updates[`/groups/${groupName}/${studentName}/status`] = "مفصول";
+                                            updates[`/groups/${groupName}/${studentName}/grades`] = "❌ الحساب معطل (مفصول)";
                                         }
-
-                                        // تحديث بيانات الطالب الغايب فوراً
-                                        database.ref('groups/' + groupName + '/' + studentName).update(updateData);
                                     } 
-                                    // لو الطالب كان حاضر، بنرجع حالته لـ "غائب" عشان بكرة يبدأ على نضافه
-                                    // (عداد الحضور attendance بيفضل كما هو لأنه اتسجل لحظة الحضور الفعلي)
+                                    // لو الطالب كان حاضر، بنرجع حالته لـ "غائب" تمهيداً ليوم جديد بدون لمس العداد
                                     else if (studentData.status === "حاضر") {
-                                        database.ref('groups/' + groupName + '/' + studentName).update({
-                                            status: "غائب"
-                                        });
+                                        updates[`/groups/${groupName}/${studentName}/status`] = "غائب";
                                     }
                                 });
                             }
                         });
 
-                        alertBox.className = "alert-msg success";
-                        alertBox.textContent = "🔒 تم قفل الحضور بنجاح، وتحديث غيابات التلاميذ المتأخرين!";
-                        alertBox.style.display = "block";
+                        // تنفيذ التحديث في الفايربيس دفعة واحدة
+                        database.ref().update(updates).then(() => {
+                            alertBox.className = "alert-msg success";
+                            alertBox.textContent = "🔒 تم قفل الحضور بنجاح، وتثبيت غيابات التلاميذ المتأخرين!";
+                            alertBox.style.display = "block";
+                        });
+                    }
+                });
+            });
+        }
+
+        // 🔓 الدالة الجديدة تماماً لإعادة فتح الحضور وإلغاء الغياب اللي نزل
+        function openAttendanceAndReset() {
+            if (!confirm("هل تريد إعادة فتح باب الحضور؟ سيتم خصم الغياب الذي تم احتسابه منذ قليل وإتاحة السكانر مجدداً.")) return;
+            
+            const alertBox = document.getElementById('alertBox');
+            
+            // 1. إعادة فتح السيستم لايف في الفايربيس
+            database.ref('system_status').set({
+                attendance_open: true
+            }).then(() => {
+                
+                // 2. قراءة الطلاب وتعديل اللي نزلهم غياب بالخطأ
+                database.ref('groups').once('value').then((snapshot) => {
+                    if (snapshot.exists()) {
+                        let updates = {};
+                        
+                        snapshot.forEach((groupSnapshot) => {
+                            const groupName = groupSnapshot.key;
+                            
+                            if (groupName !== "هيئة التدريس") {
+                                groupSnapshot.forEach((studentSnapshot) => {
+                                    const studentName = studentSnapshot.key;
+                                    const studentData = studentSnapshot.val();
+                                    
+                                    // لو الطالب نزل غياب (وحالته غائب)، بنرجع العداد خطوة لورا ونصفر الـ status عشان السكانر يقبله
+                                    if (studentData.status === "غائب") {
+                                        let currentAbsences = parseInt(studentData.absence) || 0;
+                                        let originalAbsences = currentAbsences - 1;
+                                        if (originalAbsences < 0) originalAbsences = 0;
+
+                                        updates[`/groups/${groupName}/${studentName}/absence`] = originalAbsences;
+                                        updates[`/groups/${groupName}/${studentName}/status`] = ""; // تصفيير الحالة ليقبل في السكانر
+
+                                        // لو الطالب اتقلب مفصول بسبب الغيابات دي بالخطأ، رجعه منتظم ورجع درجاته
+                                        if (studentData.grades === "❌ الحساب معطل (مفصول)") {
+                                            updates[`/groups/${groupName}/${studentName}/grades`] = 0; // أو القيمة الافتراضية للدرجات عندك
+                                        }
+                                    }
+                                });
+                            }
+                        });
+
+                        // تطبيق تصفير الغياب والفتح الفوري
+                        database.ref().update(updates).then(() => {
+                            alertBox.className = "alert-msg info";
+                            alertBox.textContent = "🔓 تم إعادة فتح باب الحضور بنجاح، وإلغاء تأثير الغياب اليومي عن الطلاب المتأخرين!";
+                            alertBox.style.display = "block";
+                        });
                     }
                 });
             });
