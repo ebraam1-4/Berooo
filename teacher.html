@@ -12,7 +12,7 @@
         .header-box { background: rgba(255,255,255,0.05); border: 0.5px solid rgba(255,255,255,0.12); border-radius: 12px; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
         .welcome-txt { font-size: 18px; font-weight: bold; }
         .welcome-txt span { color: #d4af37; }
-        .btn-logout { padding: 8px 16px; background: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-logout , .btn-logout a { text-decoration: none;padding: 8px 16px; background: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
         .control-panel { background: rgba(255,255,255,0.05); border: 0.5px solid rgba(255,255,255,0.12); border-radius: 12px; padding: 2rem; text-align: center; }
         .control-panel h2 { color: #d4af37; font-size: 20px; margin-bottom: 1rem; }
         .control-panel p { font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 2rem; line-height: 1.6; }
@@ -28,6 +28,7 @@
         <div class="header-box">
             <div class="welcome-txt">غرفة الكنترول: أ/ <span id="teacherName">..</span></div>
             <button class="btn-logout" onclick="logout()">خروج</button>
+            <button class="btn-logout" ><a href="index.html">الرئيسية</a></button>
         </div>
 
         <div class="control-panel">

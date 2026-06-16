@@ -206,3 +206,21 @@ document.addEventListener("DOMContentLoaded", () => {
   initThemeSwitcher();
   updateRoleNavItem();
 });
+// 1. تحديد كل عناصر الصوت أو أزرار التشغيل في الصفحة
+// (قم بتغيير الكلاس '.audio-element' للكلاس الخاص بعناصر الصوت عندك)
+const allAudios = document.querySelectorAll('.audio-element'); 
+
+allAudios.forEach(currentAudio => {
+    // الاستماع لحدث بدء التشغيل (play) على كل عنصر صوت
+    currentAudio.addEventListener('play', () => {
+        
+        // الميزة المطلوبة: المرور على باقي الأصوات وإيقافها
+        allAudios.forEach(otherAudio => {
+            if (otherAudio !== currentAudio) {
+                otherAudio.pause();      // إيقاف الصوت الآخر
+                otherAudio.currentTime = 0; // (اختياري) إرجاع الصوت القديم من البداية
+            }
+        });
+        
+    });
+});
