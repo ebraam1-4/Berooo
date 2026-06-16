@@ -33,7 +33,11 @@
           <li class="nav-tab"><a href="sleep.html">😴 صلاة المساء</a></li>
 
           <li class="nav-tab" id="teacherTab" style="display: none">
-            <a href="scanner.html">📸 تسجيل التلاميذ</a>
+            <a href="scanner.html">📸 تسجيل الطلاب</a>
+          </li>
+
+          <li class="nav-tab" id="teacherControlTab" style="display: none">
+            <a href="teacher.html">🔒 قفل الحضور</a>
           </li>
 
           <li class="nav-tab" id="studentTab" style="display: none">
@@ -179,15 +183,18 @@
         const userRole = sessionStorage.getItem("role");
 
         const teacherTab = document.getElementById("teacherTab");
+        const teacherControlTab = document.getElementById("teacherControlTab");
         const studentTab = document.getElementById("studentTab");
 
         // إخفاء التبويبات في البداية تماماً لمنع فلاش اللغبطة
         if (teacherTab) teacherTab.style.display = "none";
+        if (teacherControlTab) teacherControlTab.style.display = "none";
         if (studentTab) studentTab.style.display = "none";
 
         // ─── [ حالة: الخادم ] ───
         if (userRole === "teacher") {
-          if (teacherTab) teacherTab.style.display = "block"; // اظهر تسجيل التلاميذ فقط
+          if (teacherTab) teacherTab.style.display = "block"; // اظهر تسجيل الطلاب
+          if (teacherControlTab) teacherControlTab.style.display = "block"; // اظهر قفل الحضور
         }
         // ─── [ حالة: التلميذ ] ───
         else if (userRole === "student") {

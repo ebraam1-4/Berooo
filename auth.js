@@ -62,6 +62,7 @@ function checkLogin() {
         sessionStorage.setItem("studentGroup", groupInp);
         sessionStorage.setItem("studentGrades",     userData.grades     !== undefined ? userData.grades     : "");
         sessionStorage.setItem("studentAttendance", userData.attendance !== undefined ? userData.attendance : 0);
+        sessionStorage.setItem("studentAbsence",    userData.absence    !== undefined ? userData.absence    : 0);
         window.location.href = "index.html";
       } else {
         errorTxt.textContent = "هذا الاسم غير موجود في هذه المجموعة!";

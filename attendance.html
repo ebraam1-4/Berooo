@@ -134,8 +134,8 @@
 
     <script>
         // 1. نقرأ بيانات الطالب من ذاكرة الموبايل (المتصفح)
-        const loggedInName = localStorage.getItem('studentName'); // الاسم اللي دخل بيه في صفحة الـ Login
-        const loggedInGroup = localStorage.getItem('studentGroup'); // مجموعته
+        const loggedInName = sessionStorage.getItem('studentName'); // الاسم اللي دخل بيه في صفحة الـ Login
+        const loggedInGroup = sessionStorage.getItem('studentGroup'); // مجموعته
 
         const lblName = document.getElementById('lblStudentName');
         const lblGroup = document.getElementById('lblStudentGroup');
@@ -179,7 +179,7 @@
                         const studentData = snapshot.val();
                         
                         // لو الواد ده مفصول أصلاً، السيستم يرفض يحضره
-                        if (studentData.grades === "❌ الحساب معطل (مفصول)") {
+                        if (studentData.grades === "❌ الحساب معطل (مفصول)" || studentData.status === "مفصول") {
                             alertBox.className = "alert-msg error";
                             alertBox.textContent = "❌ هذا الحساب معطل حالياً بسبب تجاوز نسب الغياب!";
                             alertBox.style.display = "block";
@@ -187,9 +187,22 @@
                             return;
                         }
 
-                        // تغيير حالته لـ "حاضر" بنجاح
+                        // لو سجل حضوره فعلاً اليوم، منعرفش نديله نقطة حضور تانية
+                        if (studentData.status === "حاضر") {
+                            alertBox.className = "alert-msg success";
+                            alertBox.textContent = `✅ حضورك مسجل فعلاً اليوم يا ${loggedInName}!`;
+                            alertBox.style.display = "block";
+                            btnAction.disabled = true;
+                            return;
+                        }
+
+                        // عداد الحضور: نزود رقم أيام الحضور بواحد
+                        const currentAttendance = parseInt(studentData.attendance) || 0;
+
+                        // تغيير حالته لـ "حاضر" بنجاح وتسجيل يوم حضور جديد
                         studentRef.update({
-                            status: "حاضر"
+                            status: "حاضر",
+                            attendance: currentAttendance + 1
                         }).then(() => {
                             alertBox.className = "alert-msg success";
                             alertBox.textContent = `🎉 تم تسجيل حضورك بنجاح يا ${loggedInName}! يومك سعيد.`;

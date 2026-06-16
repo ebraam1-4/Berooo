@@ -31,9 +31,10 @@
         </div>
 
         <div class="control-panel">
-            <h2><i class="ti ti-alarm"></i> كبسولة الساعة 12:00 ظهراً</h2>
+            <h2><i class="ti ti-alarm"></i> غلق الحضور</h2>
             <p>
-                عند حلول الساعة 12:00 ظهراً، اضغط على الزرار بالأسفل لإغلاق الـ QR Code الخاص بالباب وتثبيت غياب المخدومين الذين تخلفوا عن الحضور اليوم بشكل تلقائي مع تطبيق عقوبة الفصل التلقائي لمن تجاوز 5 أيام.
+                
+            غلق الحضور الساعه 8
             </p>
 
             <button class="btn-action" onclick="closeAttendanceAndProcess()">
@@ -76,27 +77,29 @@
                                     const studentName = studentSnapshot.key;
                                     const studentData = studentSnapshot.val();
                                     
-                                    // لو الواد لسه حالته "غائب" ومفيش قدامه "حاضر"
-                                    if (studentData.status === "غائب" && studentData.grades !== "❌ الحساب معطل (مفصول)") {
-                                        let currentAbsences = parseInt(studentData.attendance) || 0;
-                                        let newAbsences = currentAbsences + 1;
-                                        
-                                        let finalAttendanceString = newAbsences; 
-                                        let finalGrades = studentData.grades;
+                                    // لو الواد ده مفصول فعلاً، مفيش داعي نلمس بياناته تاني
+                                    if (studentData.grades === "❌ الحساب معطل (مفصول)") {
+                                        return;
+                                    }
 
-                                        // قاعدة الفصل الذكي (5 أيام)
-                                        if (newAbsences >= 5) {
-                                            finalAttendanceString = "مفصول لتجاوز الغياب (5 أيام)";
-                                            finalGrades = "❌ الحساب معطل (مفصول)";
+                                    // لو الواد لسه حالته "غائب" ومفيش قدامه "حاضر"
+                                    if (studentData.status === "غائب") {
+                                        let currentAbsences = parseInt(studentData.absence) || 0;
+                                        let newAbsences = currentAbsences + 1;
+
+                                        let updateData = { absence: newAbsences };
+
+                                        // قاعدة الفصل الذكي (6 أيام غياب)
+                                        if (newAbsences >= 6) {
+                                            updateData.status = "مفصول";
+                                            updateData.grades = "❌ الحساب معطل (مفصول)";
                                         }
 
                                         // تحديث بيانات الطالب الغايب فوراً
-                                        database.ref('groups/' + groupName + '/' + studentName).update({
-                                            attendance: finalAttendanceString,
-                                            grades: finalGrades
-                                        });
+                                        database.ref('groups/' + groupName + '/' + studentName).update(updateData);
                                     } 
                                     // لو الطالب كان حاضر، بنرجع حالته لـ "غائب" عشان بكرة يبدأ على نضافه
+                                    // (عداد الحضور attendance بيفضل كما هو لأنه اتسجل لحظة الحضور الفعلي)
                                     else if (studentData.status === "حاضر") {
                                         database.ref('groups/' + groupName + '/' + studentName).update({
                                             status: "غائب"
@@ -107,7 +110,7 @@
                         });
 
                         alertBox.className = "alert-msg success";
-                        alertBox.textContent = "🔒 تم قفل الحضور بنجاح، وتحديث غيابات التلاميذ المتأخرين وفصل من تجاوز 5 أيام تلقائياً!";
+                        alertBox.textContent = "🔒 تم قفل الحضور بنجاح، وتحديث غيابات التلاميذ المتأخرين!";
                         alertBox.style.display = "block";
                     }
                 });

@@ -175,18 +175,23 @@ function createNavTab(id, href, title) {
 function updateRoleNavItem() {
   const role = sessionStorage.getItem("role");
   const teacherTab = document.getElementById("teacherTab");
+  const teacherControlTab = document.getElementById("teacherControlTab");
   const studentTab = document.getElementById("studentTab");
 
   if (role === "teacher") {
     if (studentTab) studentTab.style.display = "none";
-    const tab = createNavTab("teacherTab", "scanner.html", "📸 تسجيل التلاميذ");
+    const tab = createNavTab("teacherTab", "scanner.html", "📸 تسجيل الطلاب");
     if (tab) tab.style.display = "";
+    const controlTab = createNavTab("teacherControlTab", "teacher.html", "🔒 قفل الحضور");
+    if (controlTab) controlTab.style.display = "";
   } else if (role === "student") {
     if (teacherTab) teacherTab.style.display = "none";
+    if (teacherControlTab) teacherControlTab.style.display = "none";
     const tab = createNavTab("studentTab", "card.html", "📊 درجاتي وغيابي");
     if (tab) tab.style.display = "";
   } else {
     if (teacherTab) teacherTab.style.display = "none";
+    if (teacherControlTab) teacherControlTab.style.display = "none";
     if (studentTab) studentTab.style.display = "none";
   }
 }

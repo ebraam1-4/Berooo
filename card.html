@@ -126,6 +126,12 @@
         gap: 1.5rem;
         margin-top: 1rem;
       }
+      .stats-grid.has-absence {
+        grid-template-columns: 1fr 1fr;
+      }
+      .stats-grid.has-absence .stat-box:last-child {
+        grid-column: 1 / -1;
+      }
 
       .stat-box {
         background: rgba(255, 255, 255, 0.03);
@@ -164,6 +170,21 @@
       .stat-value.attendance {
         color: #34d399;
       } /* لون أخضر هادئ للحضور */
+      .stat-value.absence {
+        color: #f87171;
+      } /* لون أحمر هادئ للغياب */
+
+      .expelled-banner {
+        background: rgba(239, 68, 68, 0.12);
+        border: 1px solid rgba(239, 68, 68, 0.5);
+        color: #f87171;
+        border-radius: 10px;
+        padding: 0.9rem;
+        font-size: 14px;
+        margin-top: 1.5rem;
+        display: none;
+        text-align: center;
+      }
 
       .btn-back-home {
         display: inline-flex;
@@ -230,7 +251,7 @@
             مجموعة التلميذ
           </div>
 
-          <div class="stats-grid">
+          <div class="stats-grid has-absence" id="statsGrid">
             <div class="stat-box">
               <div class="stat-label">
                 <i class="ti ti-trophy"></i> إجمالي الدرجات
@@ -246,6 +267,19 @@
                 0
               </div>
             </div>
+
+            <div class="stat-box">
+              <div class="stat-label">
+                <i class="ti ti-calendar-x"></i> أيام الغياب
+              </div>
+              <div class="stat-value absence" id="studentAbsenceDisplay">
+                0
+              </div>
+            </div>
+          </div>
+
+          <div class="expelled-banner" id="expelledBanner">
+            ❌ هذا الحساب معطل حالياً بسبب تجاوز نسب الغياب (مفصول)
           </div>
 
           <a href="index.html" class="btn-back-home"
@@ -262,6 +296,9 @@
         const group = sessionStorage.getItem("studentGroup");
         const grades = sessionStorage.getItem("studentGrades");
         const attendance = sessionStorage.getItem("studentAttendance");
+        const absence = sessionStorage.getItem("studentAbsence");
+
+        const EXPELLED_TEXT = "❌ الحساب معطل (مفصول)";
 
         // حقن البيانات في الكارت بالملّي لعرضها لايف للتلميذ
         if (name)
@@ -271,12 +308,20 @@
             `مجموعة ${group}`;
 
         // التأكد من عرض 0 في حال لو كانت الخانات لسه مفيهاش قيم في الفايربيس
-        document.getElementById("studentGradesDisplay").textContent =
-          grades !== null && grades !== undefined ? grades : 0;
         document.getElementById("studentAttendanceDisplay").textContent =
           attendance !== null && attendance !== undefined ? attendance : 0;
+        document.getElementById("studentAbsenceDisplay").textContent =
+          absence !== null && absence !== undefined ? absence : 0;
+
+        // لو الحساب مفصول، نظهر تنبيه واضح ونستبدل خانة الدرجات بصفر بدل النص
+        if (grades === EXPELLED_TEXT) {
+          document.getElementById("studentGradesDisplay").textContent = "0";
+          document.getElementById("expelledBanner").style.display = "block";
+        } else {
+          document.getElementById("studentGradesDisplay").textContent =
+            grades !== null && grades !== undefined && grades !== "" ? grades : 0;
+        }
       });
     </script>
   </body>
 </html>
-

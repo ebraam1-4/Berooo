@@ -154,10 +154,36 @@
         const studentName = dataParts[1].trim();
 
         // التحديث في الفايربيس بناءً على الهيكلة الجديدة
-        database.ref('groups/' + studentGroup + '/' + studentName).once('value').then((snapshot) => {
+        const studentRef = database.ref('groups/' + studentGroup + '/' + studentName);
+        studentRef.once('value').then((snapshot) => {
             if (snapshot.exists()) {
-                database.ref('groups/' + studentGroup + '/' + studentName).update({
-                    status: "حاضر"
+                const studentData = snapshot.val();
+
+                // لو الطالب مفصول، نرفض تسجيل حضوره
+                if (studentData.grades === "❌ الحساب معطل (مفصول)" || studentData.status === "مفصول") {
+                    showError(`❌ هذا الطالب "${studentName}" مفصول حالياً بسبب تجاوز نسب الغياب!`);
+                    setTimeout(() => { isProcessing = false; }, 3000);
+                    return;
+                }
+
+                // عداد الحضور: نزود رقم أيام الحضور بواحد كل مرة يسجل فيها حضوره لأول مرة في اليوم
+                if (studentData.status === "حاضر") {
+                    // الطالب سجل حضوره فعلاً اليوم، نعرض له الترحيب بس من غير ما نكرر العداد
+                    document.getElementById('cardName').textContent = studentName;
+                    document.getElementById('cardGroup').textContent = `مجموعة ${studentGroup}`;
+                    welcomeCard.style.display = "block";
+                    setTimeout(() => {
+                        welcomeCard.style.display = "none";
+                        isProcessing = false;
+                    }, 3000);
+                    return;
+                }
+
+                const currentAttendance = parseInt(studentData.attendance) || 0;
+
+                studentRef.update({
+                    status: "حاضر",
+                    attendance: currentAttendance + 1
                 }).then(() => {
                     // إظهار كارت الترحيب ببيانات الطفل
                     document.getElementById('cardName').textContent = studentName;
@@ -214,4 +240,4 @@
 </script>
 
 </body>
-</html>
+</html>>
